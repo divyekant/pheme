@@ -1,0 +1,7 @@
+{
+  "name": "pheme",
+  "version": "0.1.0",
+  "description": "Universal communication layer -- agents notify humans across any channel",
+  "author": "Divyekant",
+  "license": "MIT"
+}

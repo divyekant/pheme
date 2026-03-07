@@ -1,0 +1,11 @@
+routes:
+  critical:
+    - slack
+    - telegram
+    - system
+  high:
+    - slack
+  normal:
+    - slack
+  low:
+    - session
