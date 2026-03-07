@@ -5,6 +5,7 @@ Agents call MCP tools; Pheme routes to the right channels.
 """
 import os
 import logging
+import re
 import sys
 
 import apprise
@@ -16,6 +17,19 @@ from server.router import Router
 logger = logging.getLogger("pheme")
 logger.addHandler(logging.StreamHandler(sys.stderr))
 logger.setLevel(logging.INFO)
+
+MAX_MESSAGE_LENGTH = 4000
+
+# Patterns that suggest sensitive data is being sent through notifications.
+# We warn but don't block — the user may have legitimate reasons.
+_SECRET_PATTERNS = [
+    re.compile(r'(?:api[_-]?key|api[_-]?secret|token|password|passwd|secret)["\s:=]+\S{8,}', re.IGNORECASE),
+    re.compile(r'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'),  # JWT
+    re.compile(r'(?:sk|pk)[-_](?:live|test)[-_][A-Za-z0-9]{10,}'),  # Stripe-style keys
+    re.compile(r'xox[bpras]-[A-Za-z0-9-]{10,}'),  # Slack tokens
+    re.compile(r'ghp_[A-Za-z0-9]{30,}'),  # GitHub PATs
+    re.compile(r'-----BEGIN (?:RSA |EC )?PRIVATE KEY-----'),  # PEM keys
+]
 
 # Route config search order: project > global > default
 ROUTE_CONFIG_PATHS = [
@@ -65,7 +79,6 @@ class PhemeServer:
             channels: list[str] | None = None,
             urgency: str | None = None,
             title: str | None = None,
-            context: dict | None = None,
             format: str = "text",
         ) -> dict:
             """Send a notification to humans via configured channels.
@@ -74,15 +87,14 @@ class PhemeServer:
             Specify exact channels OR an urgency level to let routing decide.
 
             Args:
-                message: The notification content.
+                message: The notification content (max 4000 chars).
                 channel: Single channel name (e.g. "slack").
                 channels: Multiple channel names (e.g. ["slack", "telegram"]).
                 urgency: Route by urgency: "low", "normal", "high", "critical".
                 title: Optional notification title/subject.
-                context: Optional structured metadata (repo, issue, action, etc.).
                 format: Message format: "text", "markdown", or "html".
             """
-            return await self._send(message, channel, channels, urgency, title, context, format)
+            return await self._send(message, channel, channels, urgency, title, format)
 
         @self.mcp.tool()
         async def test_channel(channel: str) -> dict:
@@ -111,9 +123,19 @@ class PhemeServer:
         channels: list[str] | None = None,
         urgency: str | None = None,
         title: str | None = None,
-        context: dict | None = None,
         format: str = "text",
     ) -> dict:
+        if len(message) > MAX_MESSAGE_LENGTH:
+            return {
+                "success": False, "delivered": [], "failed": [],
+                "error": f"Message too long ({len(message)} chars). Max is {MAX_MESSAGE_LENGTH}.",
+            }
+
+        for pattern in _SECRET_PATTERNS:
+            if pattern.search(message) or (title and pattern.search(title)):
+                logger.warning("SECURITY: message may contain sensitive data (matched secret pattern)")
+                break
+
         resolved = self.router.resolve(channel=channel, channels=channels, urgency=urgency)
 
         if not resolved:
@@ -137,8 +159,14 @@ class PhemeServer:
             else:
                 failed.append(name)
 
+        success = len(failed) == 0 and len(delivered) > 0
+        logger.info(
+            "SEND: urgency=%s channels=%s delivered=%s failed=%s len=%d",
+            urgency or "default", list(resolved.keys()), delivered, failed, len(message),
+        )
+
         return {
-            "success": len(failed) == 0 and len(delivered) > 0,
+            "success": success,
             "delivered": delivered,
             "failed": failed,
         }

@@ -1,19 +1,17 @@
 """Integration test — verifies the full MCP server wiring works end-to-end."""
-import pytest
 from unittest.mock import AsyncMock, patch
 from server.server import create_pheme_server
 
 
-@pytest.fixture
-def full_env(monkeypatch):
+def _setup_env(monkeypatch):
     monkeypatch.setenv("PHEME_SLACK", "slack://tokenA/tokenB/tokenC/#general")
     monkeypatch.setenv("PHEME_TELEGRAM", "tgram://bot_token/chat_id")
 
 
 class TestEndToEnd:
-    @pytest.mark.asyncio
-    async def test_full_flow(self, full_env):
+    async def test_full_flow(self, monkeypatch):
         """Simulate an agent discovering channels, checking routes, then sending."""
+        _setup_env(monkeypatch)
         server = create_pheme_server()
 
         # Step 1: Agent discovers channels
