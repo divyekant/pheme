@@ -7,7 +7,12 @@ so any agent can send notifications via a single tool call.
 
 ## Quick Start
 
-1. Install: `pip install -e .`
+1. Install (this automatically installs [Apprise](https://github.com/caronc/apprise) and all other dependencies):
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -e ".[dev]"
+   ```
 2. Configure channels via env vars:
    ```bash
    export PHEME_SLACK="slack://tokenA/tokenB/tokenC/#general"
@@ -44,3 +49,13 @@ routes:
   normal: [slack]
   low: [session]
 ```
+
+## Documentation
+
+Full documentation is available in [`docs/generated/external/`](docs/generated/external/index.md):
+
+- [Getting Started](docs/generated/external/getting-started.md) — install and send your first notification
+- [API Reference](docs/generated/external/api-reference.md) — all 4 MCP tools
+- [Configuration Reference](docs/generated/external/config-reference.md) — env vars and YAML routes
+- [Cookbook](docs/generated/external/cookbook.md) — copy-paste recipes for common scenarios
+- [Tutorial](docs/generated/external/tutorials/tut-001-first-notification.md) — step-by-step walkthrough
