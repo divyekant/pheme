@@ -39,3 +39,66 @@ class TestGetRoutes:
         assert "critical" in result
         assert "normal" in result
         assert isinstance(result["critical"], list)
+
+
+class TestSend:
+    @pytest.mark.asyncio
+    async def test_send_to_explicit_channel(self, env_channels):
+        server = create_pheme_server()
+        with patch("apprise.Apprise.async_notify", new_callable=AsyncMock, return_value=True):
+            result = await server._send(message="test", channel="slack")
+        assert result["success"] is True
+        assert "slack" in result["delivered"]
+
+    @pytest.mark.asyncio
+    async def test_send_to_multiple_channels(self, env_channels):
+        server = create_pheme_server()
+        with patch("apprise.Apprise.async_notify", new_callable=AsyncMock, return_value=True):
+            result = await server._send(message="test", channels=["slack", "telegram"])
+        assert result["success"] is True
+        assert len(result["delivered"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_send_with_urgency(self, env_channels):
+        server = create_pheme_server()
+        with patch("apprise.Apprise.async_notify", new_callable=AsyncMock, return_value=True):
+            result = await server._send(message="test", urgency="high")
+        assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_send_no_args_defaults_to_normal(self, env_channels):
+        server = create_pheme_server()
+        with patch("apprise.Apprise.async_notify", new_callable=AsyncMock, return_value=True):
+            result = await server._send(message="test")
+        assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_send_to_unconfigured_channel_fails(self, env_channels):
+        server = create_pheme_server()
+        result = await server._send(message="test", channel="discord")
+        assert result["success"] is False
+        assert "No configured channels matched" in result.get("error", "")
+
+    @pytest.mark.asyncio
+    async def test_send_handles_delivery_failure(self, env_channels):
+        server = create_pheme_server()
+        with patch("apprise.Apprise.async_notify", new_callable=AsyncMock, return_value=False):
+            result = await server._send(message="test", channel="slack")
+        assert result["success"] is False
+        assert "slack" in result["failed"]
+
+
+class TestTestChannel:
+    @pytest.mark.asyncio
+    async def test_configured_channel(self, env_channels):
+        server = create_pheme_server()
+        with patch("apprise.Apprise.async_notify", new_callable=AsyncMock, return_value=True):
+            result = await server._test_channel("slack")
+        assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_unconfigured_channel(self, env_channels):
+        server = create_pheme_server()
+        result = await server._test_channel("discord")
+        assert result["success"] is False
+        assert "not configured" in result["error"]
