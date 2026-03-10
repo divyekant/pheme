@@ -47,10 +47,38 @@ export PHEME_EMAIL="mailto://user:pass@gmail.com?to=me@gmail.com"
 ### 2. Start the MCP server
 
 ```bash
-python -m server.server
+python -m server
 ```
 
 The Pheme MCP server is now running and ready to accept tool calls from any MCP-compatible host (Claude Code, Cursor, Codex, etc.).
+
+### 2a. Claude Code setup
+
+Add Pheme to `~/.claude/.mcp.json` (**not** `~/.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "pheme": {
+      "command": "/path/to/pheme/.venv/bin/python",
+      "args": ["-m", "server"],
+      "cwd": "/path/to/pheme",
+      "env": {
+        "PHEME_TELEGRAM": "tgram://bot_token/chat_id"
+      }
+    }
+  }
+}
+```
+
+Symlink the agent skill for global availability:
+
+```bash
+mkdir -p ~/.claude/skills
+ln -s /path/to/pheme/skills/pheme ~/.claude/skills/pheme
+```
+
+> **Note:** MCP servers connect at session start. Restart Claude Code after config changes. Servers in `settings.json` are **not** loaded — use `.mcp.json`.
 
 ### 3. Verify your setup
 
