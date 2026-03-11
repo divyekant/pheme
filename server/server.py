@@ -34,7 +34,9 @@ _SECRET_PATTERNS = [
 # Route config search order: project > global > default
 ROUTE_CONFIG_PATHS = [
     os.path.join(os.getcwd(), ".claude", "pheme-routes.yaml"),
+    os.path.join(os.getcwd(), ".codex", "pheme-routes.yaml"),
     os.path.expanduser("~/.claude/pheme-routes.yaml"),
+    os.path.expanduser("~/.codex/pheme-routes.yaml"),
     os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "default-routes.yaml"),
 ]
 

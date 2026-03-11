@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pheme"
-version = "0.1.0"
+version = "0.1.1"
 description = "Universal communication layer for agent-to-human notifications"
 requires-python = ">=3.10"
 dependencies = [

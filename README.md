@@ -96,6 +96,28 @@ ln -s /path/to/pheme/skills/pheme ~/.claude/skills/pheme
 
 Restart Claude Code after configuration changes — MCP servers connect at session start.
 
+### Codex Integration
+
+Add Pheme to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.pheme]
+command = "/path/to/pheme/.venv/bin/python"
+args = ["-m", "server"]
+cwd = "/path/to/pheme"
+```
+
+To make the skill globally available in Codex:
+
+```bash
+mkdir -p ~/.agents/skills
+ln -s /path/to/pheme/skills/pheme ~/.agents/skills/pheme
+```
+
+Restart Codex after configuration changes so it picks up the MCP server and skill.
+
+Detailed Codex instructions: [`/.codex/INSTALL.md`](.codex/INSTALL.md)
+
 ## MCP Tools
 
 Pheme exposes 4 tools via the MCP protocol:
@@ -178,8 +200,10 @@ Pheme routes messages to channels based on urgency level. Instead of hardcoding 
 Override routing by creating a YAML file. Pheme searches in this order (first match wins):
 
 1. **Project-level:** `.claude/pheme-routes.yaml` (in the current working directory)
-2. **User-level:** `~/.claude/pheme-routes.yaml`
-3. **Default:** `config/default-routes.yaml` (bundled with Pheme)
+2. **Project-level (Codex):** `.codex/pheme-routes.yaml`
+3. **User-level:** `~/.claude/pheme-routes.yaml`
+4. **User-level (Codex):** `~/.codex/pheme-routes.yaml`
+5. **Default:** `config/default-routes.yaml` (bundled with Pheme)
 
 ```yaml
 # .claude/pheme-routes.yaml

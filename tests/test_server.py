@@ -1,7 +1,7 @@
 import os
 import pytest
 from unittest.mock import AsyncMock, patch
-from server.server import create_pheme_server, MAX_MESSAGE_LENGTH
+from server.server import create_pheme_server, MAX_MESSAGE_LENGTH, ROUTE_CONFIG_PATHS
 
 
 @pytest.fixture
@@ -36,6 +36,12 @@ class TestGetRoutes:
         assert "critical" in result
         assert "normal" in result
         assert isinstance(result["critical"], list)
+
+
+class TestRouteConfigSearchPaths:
+    def test_includes_codex_route_config_paths(self):
+        assert any(path.endswith(".codex/pheme-routes.yaml") for path in ROUTE_CONFIG_PATHS)
+        assert any(path.endswith("/.codex/pheme-routes.yaml") for path in ROUTE_CONFIG_PATHS)
 
 
 class TestSend:
