@@ -67,7 +67,38 @@ The server communicates over stdio using the MCP protocol, ready for any MCP-com
 
 ### Claude Code Integration
 
-Add Pheme to `~/.claude/.mcp.json` (the global MCP config file — **not** `settings.json`):
+Claude Code reads MCP server config from **three different locations** depending on the client. You must add Pheme to the correct file for your client:
+
+| Client | Config File |
+|--------|-------------|
+| **Claude Code CLI** (`claude` in terminal) | `~/.claude.json` → `mcpServers` |
+| **Claude Desktop** (macOS app) | `~/.claude/.mcp.json` |
+| **Project-level** (per-directory override) | `<project>/.mcp.json` |
+
+> **Important:** Each client reads from its own file. A server in `~/.claude/.mcp.json` is **not** visible to the CLI, and vice versa. If tools aren't appearing, check that the server is registered in the correct file for the client you're using.
+
+#### Claude Code CLI (`~/.claude.json`)
+
+Add to the top-level `mcpServers` key (create it if missing):
+
+```json
+{
+  "mcpServers": {
+    "pheme": {
+      "type": "stdio",
+      "command": "/path/to/pheme/.venv/bin/python",
+      "args": ["-m", "server"],
+      "cwd": "/path/to/pheme",
+      "env": {
+        "PHEME_TELEGRAM": "tgram://bot_token/chat_id",
+        "PHEME_SYSTEM": "macosx://"
+      }
+    }
+  }
+}
+```
+
+#### Claude Desktop (`~/.claude/.mcp.json`)
 
 ```json
 {
@@ -85,9 +116,13 @@ Add Pheme to `~/.claude/.mcp.json` (the global MCP config file — **not** `sett
 }
 ```
 
-> **Important:** MCP servers must be in `~/.claude/.mcp.json`. Servers placed in `~/.claude/settings.json` under `mcpServers` will **not** be loaded by Claude Code.
+#### Project-level (`<project>/.mcp.json`)
 
-To make the agent skill globally available, symlink it:
+Same format as Claude Desktop. Place in a project root to make Pheme available only in that directory.
+
+#### Skill symlink
+
+To make the agent skill globally available:
 
 ```bash
 mkdir -p ~/.claude/skills
